@@ -107,21 +107,20 @@ namespace FactionColonies.util
             if (humanPawnKindDefsCached == null)
             {
                 // Get all humanlike races including alien races if HAR is loaded
-                IEnumerable<PawnKindDef> humanlikeDefs;
+                // Materialize the enumerable to avoid multiple enumerations
                 if (HARCompat.IsHARLoaded)
                 {
-                    humanlikeDefs = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
+                    humanPawnKindDefsCached = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
                         HARCompat.IsValidHumanlikeRace(def) && 
                         def.race.label != null && 
-                        AllowedThingDefs.Contains(def.race));
+                        AllowedThingDefs.Contains(def.race)).ToList();
                 }
                 else
                 {
-                    humanlikeDefs = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
+                    humanPawnKindDefsCached = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
                         def.IsHumanlikeWithLabelRace() && 
-                        AllowedThingDefs.Contains(def.race));
+                        AllowedThingDefs.Contains(def.race)).ToList();
                 }
-                humanPawnKindDefsCached = humanlikeDefs;
             }
             
             foreach (PawnKindDef def in humanPawnKindDefsCached)

@@ -70,21 +70,7 @@ namespace FactionColonies.util
             return AlienRaceType.IsAssignableFrom(thingDef.GetType());
         }
         
-        /// <summary>
-        /// Gets all PawnKindDefs that are humanlike, including both vanilla humans and alien races.
-        /// </summary>
-        public static IEnumerable<PawnKindDef> GetAllHumanlikePawnKinds()
-        {
-            var allPawnKinds = DefDatabase<PawnKindDef>.AllDefsListForReading;
-            
-            foreach (var pawnKind in allPawnKinds)
-            {
-                if (pawnKind.race?.race?.intelligence == Intelligence.Humanlike)
-                {
-                    yield return pawnKind;
-                }
-            }
-        }
+
         
         /// <summary>
         /// Gets all alien race PawnKindDefs if HAR is loaded.
@@ -107,21 +93,7 @@ namespace FactionColonies.util
             }
         }
         
-        /// <summary>
-        /// Gets all humanlike race ThingDefs, including alien races if HAR is loaded.
-        /// </summary>
-        public static IEnumerable<ThingDef> GetAllHumanlikeRaces()
-        {
-            var allThingDefs = DefDatabase<ThingDef>.AllDefsListForReading;
-            
-            foreach (var thingDef in allThingDefs)
-            {
-                if (thingDef.race?.intelligence == Intelligence.Humanlike)
-                {
-                    yield return thingDef;
-                }
-            }
-        }
+
         
         /// <summary>
         /// Checks if a PawnKindDef is a valid humanlike race (vanilla or alien) with proper configuration.
