@@ -106,11 +106,13 @@ namespace FactionColonies
             Text.Anchor = TextAnchor.MiddleCenter;
             Rect workerRect = new Rect(inRect.width - 150, y + 5, 130, 25);
             
+            // Cache modifier before button checks to ensure consistent value
+            int modifier = Modifiers.GetModifier;
+            
             // Decrease button
             if (Widgets.ButtonText(new Rect(workerRect.x, workerRect.y, buttonWidth, buttonHeight), "<"))
             {
-                int change = -1 * Modifiers.GetModifier;
-                settlement.changeSpecialJobWorkers(jobType, change);
+                settlement.changeSpecialJobWorkers(jobType, -modifier);
             }
             
             // Worker count display
@@ -120,8 +122,7 @@ namespace FactionColonies
             // Increase button
             if (Widgets.ButtonText(new Rect(workerRect.x + buttonWidth + 60, workerRect.y, buttonWidth, buttonHeight), ">"))
             {
-                int change = 1 * Modifiers.GetModifier;
-                settlement.changeSpecialJobWorkers(jobType, change);
+                settlement.changeSpecialJobWorkers(jobType, modifier);
             }
             
             // Description

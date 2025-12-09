@@ -10,6 +10,20 @@ namespace FactionColonies
 {
     public class SettlementFC : IExposable, ILoadReferenceable
     {
+        // Special Jobs Constants
+        private const double IdleWorkerConstructionReductionPerWorker = 0.05;
+        private const double IdleWorkerConstructionMaxReduction = 0.50;
+        private const double BuilderConstructionReductionPerWorker = 0.10;
+        private const double BuilderConstructionMaxReduction = 0.50;
+        private const double BuilderUpkeepReductionPerWorker = 0.15;
+        private const double BuilderUpkeepMaxReduction = 0.75;
+        private const int EntertainerUpkeepPerLevel = 15;
+        private const int BuilderUpkeepPerLevel = 50;
+        private const double EnforcerLoyaltyBonus = 0.5;
+        private const double EnforcerUnrestReduction = 0.5;
+        private const double EnforcerHappinessPenalty = 0.4;
+        private const double EntertainerHappinessBonus = 0.2;
+
         /// <summary>
         /// Used by other mods to get to our world object through the list of SettlementFC. Rename at your own risk.
         /// </summary>
@@ -214,7 +228,7 @@ namespace FactionColonies
                 policyIncrease = 2;
 
             // Special job effects: Entertainers +0.2 happiness, Enforcers -0.4 happiness
-            double specialJobHappiness = (entertainerWorkers * 0.2) - (enforcerWorkers * 0.4);
+            double specialJobHappiness = (entertainerWorkers * EntertainerHappinessBonus) - (enforcerWorkers * EnforcerHappinessPenalty);
 
             happiness += happinessGainMultiplier * (policyIncrease + FactionColonies.happinessBaseGain +
                                                     TraitUtilsFC.cycleTraits("happinessGainedBase",
@@ -252,7 +266,7 @@ namespace FactionColonies
                 (TraitUtilsFC.cycleTraits("loyaltyLostMultiplier", traits, Operation.Multiplication) * TraitUtilsFC.cycleTraits("loyaltyLostMultiplier", Find.World.GetComponent<FactionFC>().traits, Operation.Multiplication));
 
             // Special job effects: Enforcers +0.5 loyalty
-            double specialJobLoyalty = enforcerWorkers * 0.5;
+            double specialJobLoyalty = enforcerWorkers * EnforcerLoyaltyBonus;
 
             loyalty += loyaltyGainMultiplier * (FactionColonies.loyaltyBaseGain + TraitUtilsFC.cycleTraits("loyaltyGainedBase", traits, Operation.Addition) + TraitUtilsFC.cycleTraits("loyaltyGainedBase", Find.World.GetComponent<FactionFC>().traits, Operation.Addition)
                 ); //Go through traits and add loyalty where needed
@@ -306,7 +320,7 @@ namespace FactionColonies
                 (TraitUtilsFC.cycleTraits("unrestLostMultiplier", traits, Operation.Multiplication) * TraitUtilsFC.cycleTraits("unrestLostMultiplier", Find.World.GetComponent<FactionFC>().traits, Operation.Multiplication));
 
             // Special job effects: Enforcers -0.5 unrest (increases unrest loss)
-            double specialJobUnrestReduction = enforcerWorkers * 0.5;
+            double specialJobUnrestReduction = enforcerWorkers * EnforcerUnrestReduction;
 
             unrest += unrestGainMultiplier * (FactionColonies.unrestBaseGain + TraitUtilsFC.cycleTraits("unrestGainedBase", traits, Operation.Addition) + TraitUtilsFC.cycleTraits("unrestGainedBase", Find.World.GetComponent<FactionFC>().traits, Operation.Addition)
                 ); //Go through traits and add unrest where needed
@@ -484,8 +498,7 @@ namespace FactionColonies
         public double getIdleWorkerConstructionMultiplier()
         {
             int idleWorkers = getIdleWorkers();
-            // Each idle worker provides 5% reduction, max 50% reduction (10 workers)
-            double reduction = Math.Min(idleWorkers * 0.05, 0.50);
+            double reduction = Math.Min(idleWorkers * IdleWorkerConstructionReductionPerWorker, IdleWorkerConstructionMaxReduction);
             return 1.0 - reduction;
         }
 
@@ -495,8 +508,7 @@ namespace FactionColonies
         /// </summary>
         public double getBuilderConstructionMultiplier()
         {
-            // Each builder provides 10% reduction
-            double reduction = Math.Min(builderWorkers * 0.10, 0.50);
+            double reduction = Math.Min(builderWorkers * BuilderConstructionReductionPerWorker, BuilderConstructionMaxReduction);
             return 1.0 - reduction;
         }
 
@@ -514,8 +526,7 @@ namespace FactionColonies
         /// </summary>
         public double getBuilderUpkeepMultiplier()
         {
-            // Each builder provides 15% reduction, max 75% reduction (5 workers)
-            double reduction = Math.Min(builderWorkers * 0.15, 0.75);
+            double reduction = Math.Min(builderWorkers * BuilderUpkeepReductionPerWorker, BuilderUpkeepMaxReduction);
             return 1.0 - reduction;
         }
 
@@ -525,11 +536,22 @@ namespace FactionColonies
         /// </summary>
         public double getSpecialJobUpkeep()
         {
-            // Entertainers: 15 silver per settlement level per worker
-            double entertainerUpkeep = entertainerWorkers * 15 * settlementLevel;
-            // Builders: 50 silver per settlement level per worker
-            double builderUpkeep = builderWorkers * 50 * settlementLevel;
+            double entertainerUpkeep = entertainerWorkers * EntertainerUpkeepPerLevel * settlementLevel;
+            double builderUpkeep = builderWorkers * BuilderUpkeepPerLevel * settlementLevel;
             return entertainerUpkeep + builderUpkeep;
+        }
+
+        /// <summary>
+        /// Helper method to apply worker change with clamping to zero
+        /// </summary>
+        private int applyWorkerChange(ref int currentWorkers, int change)
+        {
+            if (currentWorkers + change < 0)
+            {
+                change = -currentWorkers;
+            }
+            currentWorkers = Math.Max(0, currentWorkers + change);
+            return change;
         }
 
         /// <summary>
@@ -559,25 +581,13 @@ namespace FactionColonies
             switch (jobType.ToLower())
             {
                 case "enforcer":
-                    if (enforcerWorkers + change < 0)
-                    {
-                        change = -enforcerWorkers; // Clamp to 0
-                    }
-                    enforcerWorkers = Math.Max(0, enforcerWorkers + change);
+                    applyWorkerChange(ref enforcerWorkers, change);
                     break;
                 case "entertainer":
-                    if (entertainerWorkers + change < 0)
-                    {
-                        change = -entertainerWorkers;
-                    }
-                    entertainerWorkers = Math.Max(0, entertainerWorkers + change);
+                    applyWorkerChange(ref entertainerWorkers, change);
                     break;
                 case "builder":
-                    if (builderWorkers + change < 0)
-                    {
-                        change = -builderWorkers;
-                    }
-                    builderWorkers = Math.Max(0, builderWorkers + change);
+                    applyWorkerChange(ref builderWorkers, change);
                     break;
                 default:
                     Log.Warning("Unknown special job type: " + jobType);
