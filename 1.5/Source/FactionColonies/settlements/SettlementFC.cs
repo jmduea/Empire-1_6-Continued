@@ -213,6 +213,8 @@ namespace FactionColonies
             if (factionfc.hasPolicy(FCPolicyDefOf.egalitarian) && trait_Egalitarian_TaxBreak_Enabled)
                 policyIncrease = 2;
 
+            // Special job effects: Entertainers +0.2 happiness, Enforcers -0.4 happiness
+            double specialJobHappiness = (entertainerWorkers * 0.2) - (enforcerWorkers * 0.4);
 
             happiness += happinessGainMultiplier * (policyIncrease + FactionColonies.happinessBaseGain +
                                                     TraitUtilsFC.cycleTraits("happinessGainedBase",
@@ -225,6 +227,9 @@ namespace FactionColonies
                                                         Operation.Addition) + TraitUtilsFC.cycleTraits("happinessLostBase",
                                                         Find.World.GetComponent<FactionFC>().traits, Operation.Addition)
                 ); //Go through traits and remove happiness where needed
+
+            // Apply special job happiness effect
+            happiness += specialJobHappiness;
 
             happiness = Math.Round(happiness, 1);
 
@@ -246,10 +251,16 @@ namespace FactionColonies
             double loyaltyLostMultiplier =
                 (TraitUtilsFC.cycleTraits("loyaltyLostMultiplier", traits, Operation.Multiplication) * TraitUtilsFC.cycleTraits("loyaltyLostMultiplier", Find.World.GetComponent<FactionFC>().traits, Operation.Multiplication));
 
+            // Special job effects: Enforcers +0.5 loyalty
+            double specialJobLoyalty = enforcerWorkers * 0.5;
+
             loyalty += loyaltyGainMultiplier * (FactionColonies.loyaltyBaseGain + TraitUtilsFC.cycleTraits("loyaltyGainedBase", traits, Operation.Addition) + TraitUtilsFC.cycleTraits("loyaltyGainedBase", Find.World.GetComponent<FactionFC>().traits, Operation.Addition)
                 ); //Go through traits and add loyalty where needed
             loyalty -= loyaltyLostMultiplier * (FactionColonies.loyaltyBaseLost + TraitUtilsFC.cycleTraits("loyaltyLostBase", traits, Operation.Addition) + TraitUtilsFC.cycleTraits("loyaltyLostBase", Find.World.GetComponent<FactionFC>().traits, Operation.Addition)
                 ); //Go through traits and remove loyalty where needed
+
+            // Apply special job loyalty effect
+            loyalty += specialJobLoyalty;
 
             loyalty = Math.Round(loyalty, 1);
 
@@ -294,10 +305,16 @@ namespace FactionColonies
             double unrestLostMultiplier =
                 (TraitUtilsFC.cycleTraits("unrestLostMultiplier", traits, Operation.Multiplication) * TraitUtilsFC.cycleTraits("unrestLostMultiplier", Find.World.GetComponent<FactionFC>().traits, Operation.Multiplication));
 
+            // Special job effects: Enforcers -0.5 unrest (increases unrest loss)
+            double specialJobUnrestReduction = enforcerWorkers * 0.5;
+
             unrest += unrestGainMultiplier * (FactionColonies.unrestBaseGain + TraitUtilsFC.cycleTraits("unrestGainedBase", traits, Operation.Addition) + TraitUtilsFC.cycleTraits("unrestGainedBase", Find.World.GetComponent<FactionFC>().traits, Operation.Addition)
                 ); //Go through traits and add unrest where needed
             unrest -= unrestLostMultiplier * (FactionColonies.unrestBaseLost + TraitUtilsFC.cycleTraits("unrestLostBase", traits, Operation.Addition) + TraitUtilsFC.cycleTraits("unrestLostBase", Find.World.GetComponent<FactionFC>().traits, Operation.Addition)
                 ); //Go through traits and remove unrest where needed
+
+            // Apply special job unrest reduction
+            unrest -= specialJobUnrestReduction;
 
             unrest = Math.Round(unrest, 1);
 
@@ -433,6 +450,145 @@ namespace FactionColonies
             return totalWorkers;
         }
 
+        /// <summary>
+        /// Gets the total workers assigned to special jobs (enforcer, entertainer, builder)
+        /// </summary>
+        public int getTotalSpecialJobWorkers()
+        {
+            return enforcerWorkers + entertainerWorkers + builderWorkers;
+        }
+
+        /// <summary>
+        /// Gets the total workers assigned to all jobs (resource production + special jobs)
+        /// </summary>
+        public int getTotalAssignedWorkers()
+        {
+            return getTotalWorkers() + getTotalSpecialJobWorkers();
+        }
+
+        /// <summary>
+        /// Gets the number of idle workers (workers available but not assigned to any job)
+        /// Idle workers provide a construction time bonus
+        /// </summary>
+        public int getIdleWorkers()
+        {
+            int totalAssigned = getTotalAssignedWorkers();
+            int maxAvailable = (int)workersUltraMax;
+            return Math.Max(0, maxAvailable - totalAssigned);
+        }
+
+        /// <summary>
+        /// Gets the construction time multiplier based on idle workers
+        /// Each idle worker reduces construction time by 5%, up to a maximum of 50%
+        /// </summary>
+        public double getIdleWorkerConstructionMultiplier()
+        {
+            int idleWorkers = getIdleWorkers();
+            // Each idle worker provides 5% reduction, max 50% reduction (10 workers)
+            double reduction = Math.Min(idleWorkers * 0.05, 0.50);
+            return 1.0 - reduction;
+        }
+
+        /// <summary>
+        /// Gets the construction time multiplier from builder workers
+        /// Each builder worker reduces construction time by 10%
+        /// </summary>
+        public double getBuilderConstructionMultiplier()
+        {
+            // Each builder provides 10% reduction
+            double reduction = Math.Min(builderWorkers * 0.10, 0.50);
+            return 1.0 - reduction;
+        }
+
+        /// <summary>
+        /// Gets the combined construction time multiplier (idle workers + builders)
+        /// </summary>
+        public double getTotalConstructionTimeMultiplier()
+        {
+            return getIdleWorkerConstructionMultiplier() * getBuilderConstructionMultiplier();
+        }
+
+        /// <summary>
+        /// Gets the building upkeep multiplier from builder workers
+        /// Each builder worker reduces building upkeep by 15%
+        /// </summary>
+        public double getBuilderUpkeepMultiplier()
+        {
+            // Each builder provides 15% reduction, max 75% reduction (5 workers)
+            double reduction = Math.Min(builderWorkers * 0.15, 0.75);
+            return 1.0 - reduction;
+        }
+
+        /// <summary>
+        /// Gets the upkeep cost for special job workers (entertainers and builders)
+        /// Enforcers have no upkeep cost (they have a happiness penalty instead)
+        /// </summary>
+        public double getSpecialJobUpkeep()
+        {
+            // Entertainers: 15 silver per settlement level per worker
+            double entertainerUpkeep = entertainerWorkers * 15 * settlementLevel;
+            // Builders: 50 silver per settlement level per worker
+            double builderUpkeep = builderWorkers * 50 * settlementLevel;
+            return entertainerUpkeep + builderUpkeep;
+        }
+
+        /// <summary>
+        /// Increases or decreases workers assigned to a special job
+        /// </summary>
+        /// <param name="jobType">The type of special job: "enforcer", "entertainer", or "builder"</param>
+        /// <param name="change">The amount to change (positive to add, negative to remove)</param>
+        /// <returns>True if the change was successful</returns>
+        public bool changeSpecialJobWorkers(string jobType, int change)
+        {
+            if (isUnderAttack)
+            {
+                Messages.Message("SettlementUnderAttack".Translate(), MessageTypeDefOf.RejectInput);
+                return false;
+            }
+
+            int currentAssigned = getTotalAssignedWorkers();
+            int maxAvailable = (int)workersUltraMax;
+            
+            // Check if we have available workers when adding
+            if (change > 0 && currentAssigned + change > maxAvailable)
+            {
+                Messages.Message("NotEnoughAvailableWorkers".Translate(), MessageTypeDefOf.RejectInput);
+                return false;
+            }
+
+            switch (jobType.ToLower())
+            {
+                case "enforcer":
+                    if (enforcerWorkers + change < 0)
+                    {
+                        change = -enforcerWorkers; // Clamp to 0
+                    }
+                    enforcerWorkers = Math.Max(0, enforcerWorkers + change);
+                    break;
+                case "entertainer":
+                    if (entertainerWorkers + change < 0)
+                    {
+                        change = -entertainerWorkers;
+                    }
+                    entertainerWorkers = Math.Max(0, entertainerWorkers + change);
+                    break;
+                case "builder":
+                    if (builderWorkers + change < 0)
+                    {
+                        change = -builderWorkers;
+                    }
+                    builderWorkers = Math.Max(0, builderWorkers + change);
+                    break;
+                default:
+                    Log.Warning("Unknown special job type: " + jobType);
+                    return false;
+            }
+
+            updateProfitAndProduction();
+            Find.World.GetComponent<FactionFC>().updateTotalProfit();
+            return true;
+        }
+
         private bool CanStillModify(ResourceType? resourceType, int singleMod) => workers + singleMod <= workersUltraMax && workers + singleMod >= 0 && getResource(resourceType.Value).assignedWorkers + singleMod <= workersUltraMax && getResource(resourceType.Value).assignedWorkers + singleMod >= 0;
 
         public bool increaseWorkers(ResourceType? resourceType, int numWorkers)
@@ -499,6 +655,8 @@ namespace FactionColonies
 
             upkeep += (workerTotalUpkeep);
 
+            // Get builder upkeep multiplier (reduces building upkeep)
+            double builderUpkeepMult = getBuilderUpkeepMultiplier();
 
             foreach (BuildingFCDef building in buildings)
             {
@@ -513,11 +671,18 @@ namespace FactionColonies
                     }
                 }
 
+                double buildingUpkeep;
                 if (building.upkeep != 0 && !isMilitary || !faction.hasPolicy(FCPolicyDefOf.militaristic))
-                    upkeep += building.upkeep;
+                    buildingUpkeep = building.upkeep;
                 else
-                    upkeep += Math.Max(0, building.upkeep - 100);
+                    buildingUpkeep = Math.Max(0, building.upkeep - 100);
+                
+                // Apply builder discount to building upkeep
+                upkeep += buildingUpkeep * builderUpkeepMult;
             }
+
+            // Add special job upkeep (entertainers and builders cost silver)
+            upkeep += getSpecialJobUpkeep();
 
             //Log.Message("upkeep " + upkeep.ToString());
             return upkeep;
@@ -608,6 +773,11 @@ namespace FactionColonies
 
             //Shuttles
             Scribe_Values.Look(ref lastShuttleUsesTick, "lastShuttleUsesTick");
+
+            //Special Jobs
+            Scribe_Values.Look(ref enforcerWorkers, "enforcerWorkers", 0);
+            Scribe_Values.Look(ref entertainerWorkers, "entertainerWorkers", 0);
+            Scribe_Values.Look(ref builderWorkers, "builderWorkers", 0);
         }
 
         //Settlement Base Info
@@ -667,6 +837,11 @@ namespace FactionColonies
 
         //shuttle stuff
         public int lastShuttleUsesTick = 0;
+
+        //Special Jobs - workers assigned to non-resource jobs
+        public int enforcerWorkers = 0;  // +0.5 loyalty, -0.5 unrest, -0.4 happiness per worker
+        public int entertainerWorkers = 0;  // +0.2 happiness per worker, costs 15 silver per settlement level per worker
+        public int builderWorkers = 0;  // -15% building upkeep, +10% construction speed per worker, costs 50 silver per level per worker
 
 
         //public static Biome biome;

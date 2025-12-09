@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+	<!-- Special Jobs Feature -->
+	<SpecialJobs>Special Jobs</SpecialJobs>
+	<IdleWorkers>Idle</IdleWorkers>
+	<AvailableWorkers>Available Workers</AvailableWorkers>
+	<ConstructionBonus>Construction Bonus</ConstructionBonus>
+	<ConstructionTime>construction time</ConstructionTime>
+	<TotalConstructionSpeedBonus>Total Construction Speed Bonus</TotalConstructionSpeedBonus>
+	<SpecialJobUpkeep>Special Job Upkeep</SpecialJobUpkeep>
+	<NotEnoughAvailableWorkers>Not enough available workers</NotEnoughAvailableWorkers>
+	
+	<!-- Special Job Names -->
+	<Enforcer>Enforcer</Enforcer>
+	<Entertainer>Entertainer</Entertainer>
+	<Builder>Builder</Builder>
+	
+	<!-- Special Job Descriptions -->
+	<EnforcerDesc>Enforcers maintain order. Per worker: +0.5 loyalty, -0.5 unrest, -0.4 happiness. No upkeep cost.</EnforcerDesc>
+	<EntertainerDesc>Entertainers keep workers happy. Per worker: +0.2 happiness. Upkeep: {0} silver per tax period.</EntertainerDesc>
+	<BuilderDesc>Builders accelerate construction. Per worker: Upkeep: {0} silver. Current bonuses: -{1}% construction time, -{2}% building upkeep.</BuilderDesc>
+</LanguageData>
