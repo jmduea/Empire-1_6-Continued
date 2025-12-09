@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<loadFolders>
+	<v1.5>
+		<li>/</li>
+		<li>Common</li>
+		<li>1.5</li>
+		<li IfModActive="erdelf.HumanoidAlienRaces,erdelf.HumanoidAlienRaces_steam">1.5/Patches/HumanoidAlienRaces</li>
+	</v1.5>
+	<v1.6>
+		<li>/</li>
+		<li>Common</li>
+		<li>1.6</li>
+		<li IfModActive="erdelf.HumanoidAlienRaces,erdelf.HumanoidAlienRaces_steam">1.6/Patches/HumanoidAlienRaces</li>
+	</v1.6>
+</loadFolders>
