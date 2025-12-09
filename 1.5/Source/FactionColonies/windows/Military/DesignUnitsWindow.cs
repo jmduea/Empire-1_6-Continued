@@ -222,6 +222,8 @@ namespace FactionColonies
                     options.Add(new FloatMenuOption(optionStr, delegate
                     {
                         selectedUnit.pawnKind = def;
+                        // Set the xenotype to Baseliner by default when changing race
+                        selectedUnit.xenotype = XenotypeDefOf.Baseliner;
                         selectedUnit.generateDefaultPawn();
                         selectedUnit.changeTick();
                     }));
