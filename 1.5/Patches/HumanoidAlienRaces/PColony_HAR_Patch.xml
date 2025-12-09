@@ -1,20 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Patch>
 	<!-- 
-		This patch extends the PColony faction to support alien races from HAR when the mod is loaded.
-		It doesn't modify the base faction definition but allows the C# code to dynamically add alien races.
+		HAR (Humanoid Alien Races) Compatibility Patches
+		
+		This folder is loaded only when HAR (erdelf.HumanoidAlienRaces) is active.
+		The actual alien race integration is handled dynamically by the HARCompat.cs class.
+		
+		This file serves as a marker that the HAR compatibility folder has loaded successfully.
+		Additional XML patches can be added here in the future if needed.
 	-->
-	<Operation Class="PatchOperationSequence">
-		<success>Always</success>
-		<operations>
-			<!-- This is a placeholder patch that ensures the folder loads correctly -->
-			<!-- The actual alien race integration is handled by the C# HARCompat class -->
-			<li Class="PatchOperationAdd">
-				<xpath>/Defs</xpath>
-				<value>
-					<!-- Marker to confirm HAR compatibility patches are loaded -->
-				</value>
-			</li>
-		</operations>
-	</Operation>
 </Patch>

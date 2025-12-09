@@ -93,28 +93,34 @@ namespace FactionColonies.util
         private void RefreshHumanRaces()
         {
             List<string> races = new List<string>();
-            // Get all humanlike races including alien races if HAR is loaded
-            IEnumerable<PawnKindDef> humanlikeDefs;
-            if (HARCompat.IsHARLoaded)
+            
+            if (humanPawnKindDefsCached == null)
             {
-                humanlikeDefs = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
-                    HARCompat.IsValidHumanlikeRace(def) && 
-                    def.race.label != null && 
-                    !races.Contains(def.race.label) && 
-                    AllowedThingDefs.Contains(def.race));
-            }
-            else
-            {
-                humanlikeDefs = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
-                    def.IsHumanlikeWithLabelRace() && 
-                    !races.Contains(def.race.label) && 
-                    AllowedThingDefs.Contains(def.race));
+                // Get all humanlike races including alien races if HAR is loaded
+                IEnumerable<PawnKindDef> humanlikeDefs;
+                if (HARCompat.IsHARLoaded)
+                {
+                    humanlikeDefs = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
+                        HARCompat.IsValidHumanlikeRace(def) && 
+                        def.race.label != null && 
+                        AllowedThingDefs.Contains(def.race));
+                }
+                else
+                {
+                    humanlikeDefs = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
+                        def.IsHumanlikeWithLabelRace() && 
+                        AllowedThingDefs.Contains(def.race));
+                }
+                humanPawnKindDefsCached = humanlikeDefs;
             }
             
-            foreach (PawnKindDef def in humanPawnKindDefsCached ?? (humanPawnKindDefsCached = humanlikeDefs))
+            foreach (PawnKindDef def in humanPawnKindDefsCached)
             {
-                races.Add(def.race.label);
-                SetAllow(def.race, true);
+                if (!races.Contains(def.race.label))
+                {
+                    races.Add(def.race.label);
+                    SetAllow(def.race, true);
+                }
             }
         }
 
