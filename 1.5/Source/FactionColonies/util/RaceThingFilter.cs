@@ -141,8 +141,13 @@ namespace FactionColonies.util
                 {
                     defaultList = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def =>
                     {
-                        // Must be humanlike (vanilla or alien if HAR is loaded)
-                        bool isHumanlike = def.IsHumanLikeRace() || (HARCompat.IsHARLoaded && HARCompat.IsValidHumanlikeRace(def));
+                        // Must be humanlike - check vanilla races first for performance
+                        bool isHumanlike = def.IsHumanLikeRace();
+                        // If not a vanilla humanlike, check if it's an alien race (only when HAR is loaded)
+                        if (!isHumanlike && HARCompat.IsHARLoaded)
+                        {
+                            isHumanlike = HARCompat.IsValidHumanlikeRace(def);
+                        }
                         if (!isHumanlike) return false;
                         
                         // Must be in allowed races
