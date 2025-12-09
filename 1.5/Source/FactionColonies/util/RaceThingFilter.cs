@@ -11,7 +11,7 @@ namespace FactionColonies.util
         private FactionDef faction;
         private FactionFC factionFc;
         private MilitaryCustomizationUtil militaryUtil;
-        private IEnumerable<PawnKindDef> humanPawnKindDefsCached;
+        private List<PawnKindDef> humanPawnKindDefsCached;
         private IEnumerable<PawnKindDef> defaultList;
         private IEnumerable<PawnKindDef> animalPawnKindDefsCached;
 
@@ -65,7 +65,26 @@ namespace FactionColonies.util
             faction = DefDatabase<FactionDef>.GetNamed("PColony");
             faction.pawnGroupMakers = emptyList.ListFullCopy();
 
-            if (AllowedDefCount == 0) SetAllow((animalPawnKindDefsCached ?? (animalPawnKindDefsCached = DefDatabase<PawnKindDef>.AllDefsListForReading)).First(def => def.IsHumanlikeWithLabelRace()).race, true);
+            if (AllowedDefCount == 0)
+            {
+                // Initialize with a default humanlike race (including alien races if HAR is loaded)
+                var allPawnKinds = animalPawnKindDefsCached ?? (animalPawnKindDefsCached = DefDatabase<PawnKindDef>.AllDefsListForReading);
+                PawnKindDef defaultRace;
+                
+                if (HARCompat.IsHARLoaded)
+                {
+                    defaultRace = allPawnKinds.FirstOrDefault(def => HARCompat.IsValidHumanlikeRace(def) && def.race.label != null);
+                }
+                else
+                {
+                    defaultRace = allPawnKinds.FirstOrDefault(def => def.IsHumanlikeWithLabelRace());
+                }
+                
+                if (defaultRace != null)
+                {
+                    SetAllow(defaultRace.race, true);
+                }
+            }
 
             RefreshAnimalRaces();
             RefreshHumanRaces();
@@ -84,14 +103,63 @@ namespace FactionColonies.util
         private void RefreshHumanRaces()
         {
             List<string> races = new List<string>();
-            foreach (PawnKindDef def in humanPawnKindDefsCached ?? (humanPawnKindDefsCached = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => def.IsHumanlikeWithLabelRace() && !races.Contains(def.race.label) && AllowedThingDefs.Contains(def.race))))
+            
+            if (humanPawnKindDefsCached == null)
             {
-                races.Add(def.race.label);
-                SetAllow(def.race, true);
+                // Get all humanlike races including alien races if HAR is loaded
+                // Use ToList() to materialize the query once and cache results for repeated iteration
+                if (HARCompat.IsHARLoaded)
+                {
+                    humanPawnKindDefsCached = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
+                        HARCompat.IsValidHumanlikeRace(def) && 
+                        def.race.label != null && 
+                        AllowedThingDefs.Contains(def.race)).ToList();
+                }
+                else
+                {
+                    humanPawnKindDefsCached = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
+                        def.IsHumanlikeWithLabelRace() && 
+                        AllowedThingDefs.Contains(def.race)).ToList();
+                }
+            }
+            
+            foreach (PawnKindDef def in humanPawnKindDefsCached)
+            {
+                if (!races.Contains(def.race.label))
+                {
+                    races.Add(def.race.label);
+                    SetAllow(def.race, true);
+                }
             }
         }
 
-        private IEnumerable<PawnKindDef> DefaultList => defaultList ?? (defaultList = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => def.IsHumanLikeRace() && AllowedThingDefs.Contains(def.race) && def.defaultFactionDef != null && def.defaultFactionDef.defName != "Empire"));
+        private IEnumerable<PawnKindDef> DefaultList
+        {
+            get
+            {
+                if (defaultList == null)
+                {
+                    defaultList = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def =>
+                    {
+                        // Must be humanlike - check vanilla races first for performance
+                        bool isHumanlike = def.IsHumanLikeRace();
+                        // If not a vanilla humanlike, check if it's an alien race (only when HAR is loaded)
+                        if (!isHumanlike && HARCompat.IsHARLoaded)
+                        {
+                            isHumanlike = HARCompat.IsValidHumanlikeRace(def);
+                        }
+                        if (!isHumanlike) return false;
+                        
+                        // Must be in allowed races
+                        if (!AllowedThingDefs.Contains(def.race)) return false;
+                        
+                        // Must have a default faction that's not Empire
+                        return def.defaultFactionDef != null && def.defaultFactionDef.defName != "Empire";
+                    });
+                }
+                return defaultList;
+            }
+        }
         private IEnumerable<PawnKindDef> PawnKindDefsForTechLevel(TechLevel techLevel) => DefaultList.Where(def => def.defaultFactionDef != null && def.defaultFactionDef.techLevel == techLevel);
 
         private bool FactionProbablyNotGeneratedYet => !AllowedThingDefs.Any() || factionFc.techLevel == TechLevel.Undefined;

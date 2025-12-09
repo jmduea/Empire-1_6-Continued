@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+	<!-- 
+		HAR (Humanoid Alien Races) Compatibility Patches
+		
+		This folder is loaded only when HAR (erdelf.HumanoidAlienRaces) is active.
+		The actual alien race integration is handled dynamically by the HARCompat.cs class.
+		
+		This file serves as a marker that the HAR compatibility folder has loaded successfully.
+		Additional XML patches can be added here in the future if needed.
+	-->
+</Patch>
