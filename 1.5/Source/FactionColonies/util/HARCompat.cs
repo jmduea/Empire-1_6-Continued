@@ -70,10 +70,6 @@ namespace FactionColonies.util
             return AlienRaceType.IsAssignableFrom(thingDef.GetType());
         }
         
-
-
-
-        
         /// <summary>
         /// Checks if a PawnKindDef is a valid humanlike race (vanilla or alien) with proper configuration.
         /// </summary>

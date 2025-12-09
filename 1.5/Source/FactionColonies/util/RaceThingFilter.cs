@@ -107,7 +107,7 @@ namespace FactionColonies.util
             if (humanPawnKindDefsCached == null)
             {
                 // Get all humanlike races including alien races if HAR is loaded
-                // Materialize the enumerable to avoid multiple enumerations
+                // Use ToList() to materialize the query once and cache results for repeated iteration
                 if (HARCompat.IsHARLoaded)
                 {
                     humanPawnKindDefsCached = DefDatabase<PawnKindDef>.AllDefsListForReading.Where(def => 
