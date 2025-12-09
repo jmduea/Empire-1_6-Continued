@@ -72,11 +72,12 @@ namespace FactionColonies
             "FCProsperity".Translate()
         };
 
-        private readonly List<string> buttons = new List<string>(5)
+        private readonly List<string> buttons = new List<string>(6)
         {
             "DeleteSettlement".Translate(), 
             "UpgradeTown".Translate(), 
             "FCSpecialActions".Translate(),
+            "SpecialJobs".Translate(),
             "PrisonersMenu".Translate(), 
             "Military".Translate()
         };
@@ -308,8 +309,18 @@ namespace FactionColonies
             Text.Anchor = TextAnchor.MiddleRight;
             Text.Font = GameFont.Small;
 
-            //Assigned workers
-            Widgets.Label(new Rect(x, y, 410, 30), string.Format("{0}: {1}/{2}/{3}", "AssignedWorkers".Translate(), settlement.getTotalWorkers(), settlement.workersMax, settlement.workersUltraMax));
+            //Assigned workers - now includes special job workers
+            int totalResourceWorkers = settlement.getTotalWorkers();
+            int totalSpecialWorkers = settlement.getTotalSpecialJobWorkers();
+            int totalAssigned = totalResourceWorkers + totalSpecialWorkers;
+            int idleWorkers = settlement.getIdleWorkers();
+            Widgets.Label(new Rect(x, y, 410, 30), string.Format("{0}: {1}/{2}/{3} ({4}: {5})", 
+                "AssignedWorkers".Translate(), 
+                totalAssigned, 
+                settlement.workersMax, 
+                settlement.workersUltraMax,
+                "IdleWorkers".Translate(),
+                idleWorkers));
 
             Text.Anchor = TextAnchor.MiddleCenter;
             Text.Font = GameFont.Tiny;
@@ -530,6 +541,11 @@ namespace FactionColonies
                             if (list.Count() == 0)
                                 list.Add(new FloatMenuOption("No special actions to take", delegate { }));
                             Find.WindowStack.Add(new FloatMenu(list));
+                        }
+
+                        if (buttons[i] == "SpecialJobs".Translate())
+                        {
+                            Find.WindowStack.Add(new FCSpecialJobsWindow(settlement));
                         }
 
                         if (buttons[i] == "PrisonersMenu".Translate())

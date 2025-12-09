@@ -311,6 +311,9 @@ namespace FactionColonies
                             if (factionfc.hasPolicy(FCPolicyDefOf.isolationist))
                                 triggerTime /= 2;
 
+                            // Apply idle worker and builder construction time reduction
+                            triggerTime = (int)(triggerTime * settlement.getTotalConstructionTimeMultiplier());
+
                             tmpEvt.timeTillTrigger = Find.TickManager.TicksGame + triggerTime;
                             Find.World.GetComponent<FactionFC>().addEvent(tmpEvt);
 

@@ -52,12 +52,19 @@ namespace FactionColonies
 
             //on success
             PaymentUtil.paySilver(settlementUpgradeCost);
+            
+            // Calculate base upgrade time
+            int baseUpgradeTime = (settlement.settlementLevel + 1) * 60000 * (factionfc.hasPolicy(FCPolicyDefOf.isolationist) ? 1 : 2);
+            
+            // Apply idle worker and builder construction time reduction
+            int upgradeTime = (int)(baseUpgradeTime * settlement.getTotalConstructionTimeMultiplier());
+            
             FCEvent tmp = new FCEvent(true)
             {
                 def = FCEventDefOf.upgradeSettlement,
                 location = settlement.mapLocation,
                 planetName = settlement.planetName,
-                timeTillTrigger = Find.TickManager.TicksGame + (settlement.settlementLevel + 1) * 60000 * (factionfc.hasPolicy(FCPolicyDefOf.isolationist) ? 1 : 2)
+                timeTillTrigger = Find.TickManager.TicksGame + upgradeTime
             };
                 
             Find.World.GetComponent<FactionFC>().addEvent(tmp);
