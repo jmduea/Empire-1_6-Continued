@@ -11,7 +11,7 @@ namespace FactionColonies.util
         private FactionDef faction;
         private FactionFC factionFc;
         private MilitaryCustomizationUtil militaryUtil;
-        private IEnumerable<PawnKindDef> humanPawnKindDefsCached;
+        private List<PawnKindDef> humanPawnKindDefsCached;
         private IEnumerable<PawnKindDef> defaultList;
         private IEnumerable<PawnKindDef> animalPawnKindDefsCached;
 

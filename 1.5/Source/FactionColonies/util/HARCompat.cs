@@ -71,28 +71,7 @@ namespace FactionColonies.util
         }
         
 
-        
-        /// <summary>
-        /// Gets all alien race PawnKindDefs if HAR is loaded.
-        /// </summary>
-        public static IEnumerable<PawnKindDef> GetAlienRacePawnKinds()
-        {
-            if (!IsHARLoaded)
-            {
-                yield break;
-            }
-            
-            var allPawnKinds = DefDatabase<PawnKindDef>.AllDefsListForReading;
-            
-            foreach (var pawnKind in allPawnKinds)
-            {
-                if (pawnKind.race != null && IsAlienRace(pawnKind.race))
-                {
-                    yield return pawnKind;
-                }
-            }
-        }
-        
+
 
         
         /// <summary>
